@@ -1,0 +1,67 @@
+import random
+
+# Define optimization parameters
+
+obj_func = lambda x: 5*x[0] - 3*x[1] + 2*x[2]
+
+n_vars = 3
+
+var_ranges = [(0, 8), (-8, 8), (-5, 5)]
+mutation_rate = 0.05
+pop_size = 60
+
+n_generations = 100
+crossover_rate = 0.9
+
+
+
+
+def initialize_population(pop_size, var_ranges):
+    return [[random.uniform(var_range[0], var_range[1]) for var_range in var_ranges] for _ in range(pop_size)]
+
+def evaluate_population(population):
+    return [obj_func(individual) for individual in population]
+
+def select_parents(population, fitness, selection_rate=0.5):
+    n_parents = int(selection_rate * len(population))
+    sorted_indices = sorted(range(len(fitness)), key=lambda k: fitness[k], reverse=True)
+    return [population[i] for i in sorted_indices[:n_parents]]
+
+def double_point_crossover(parent1, parent2):
+    n_vars = len(parent1)
+    crossover_points = sorted(random.sample(range(1, n_vars), 2))
+    offspring1 = parent1[:crossover_points[0]] + parent2[crossover_points[0]:crossover_points[1]] + parent1[crossover_points[1]:]
+    offspring2 = parent2[:crossover_points[0]] + parent1[crossover_points[0]:crossover_points[1]] + parent2[crossover_points[1]:]
+    return offspring1, offspring2
+
+def mutate(offspring, var_ranges, mutation_rate):
+    for i in range(len(offspring)):
+        if random.random() < mutation_rate:
+            offspring[i] = random.uniform(var_ranges[i][0], var_ranges[i][1])
+    return offspring
+
+
+population = initialize_population(pop_size, var_ranges)
+for generation in range(n_generations):
+    fitness = evaluate_population(population)
+    parents = select_parents(population, fitness)
+    offspring = []
+    while len(offspring) < pop_size - len(parents):
+        parent1, parent2 = random.sample(parents, 2)
+        if random.random() < crossover_rate:
+            child1, child2 = double_point_crossover(parent1, parent2)
+        else:
+            child1, child2 = parent1, parent2
+        child1 = mutate(child1, var_ranges, mutation_rate)
+        child2 = mutate(child2, var_ranges, mutation_rate)
+        offspring += [child1, child2]
+    population = parents + offspring
+
+
+fitness = evaluate_population(population)
+best_index = fitness.index(max(fitness))
+best_individual = population[best_index]
+best_fitness = fitness[best_index]
+
+print("Best individual:", best_individual)
+print("Best fitness:", best_fitness)
